@@ -46,7 +46,12 @@ class Game:
                 next = True
                 while next:
                     self.disable(number)
-                    next = self.check(number)
+                    next = any(
+                        [
+                            self.check_lines(number),
+                            self.check_columns(number),
+                        ]
+                    )
 
                     if next:
                         global_next = True
@@ -67,7 +72,7 @@ class Game:
                 if any([same_line, same_col, same_block]):
                     self.available[number][i_line][i_cell] = None
 
-    def check(self, number):
+    def check_lines(self, number):
         for i_line, line in enumerate(self.available[number]):
             line_values = []
             position = []
@@ -81,12 +86,13 @@ class Game:
                 self.GRID[position[0]][position[1]] = number + 1
                 return True
 
+    def check_columns(self, number):
         for column in range(9):
             column_values = []
             position = []
 
             for i_line, line in enumerate(self.available[number]):
-                if line[column] == 1:
+                if line[column] == number + 1:
                     position = [i_line, column]
                     column_values.append(1)
 
