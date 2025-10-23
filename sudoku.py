@@ -1,6 +1,9 @@
 class Game:
-    def __init__(self, grid):
-        self.grid = grid
+    STOP_PROCESS = False
+    STOP_ITERATION = False
+
+    def __init__(self, sudoku):
+        self.sudoku = sudoku
         self.available = [
             [[number + 1 for _ in range(9)] for _ in range(9)] for number in range(9)
         ]
@@ -10,58 +13,52 @@ class Game:
             for i_cell, cell in enumerate(line):
                 yield i_line, i_cell, line, cell
 
-    def print(self, element):
+    def print_grid(self, element):
         for index, line in enumerate(element):
-            if index in (0, 3, 6):
-                print(*["- " * (len(line) + 2)])
+            separator = ["-"] * len(line)
+            to_print = [cell or " " for cell in line]
 
-            _display = [cell or " " for cell in line]
             for position in (6, 3):
-                _display.insert(position, "|")
+                separator.insert(position, "|")
+                to_print.insert(position, "|")
 
-            print(*_display)
+            if index in (3, 6):
+                print(*separator)
 
-            if index == len(line) - 1:
-                print(*["- " * (len(line) + 2)])
+            print(*to_print)
 
     def process(self):
-        self.count_values()
+        self.count_initial_values()
 
-        global_next = True
-        while global_next:
-            global_next = False
+        while not self.STOP_PROCESS:
+            self.STOP_PROCESS = True
 
             for number in range(9):
-                next = True
-                while next:
-                    self.disable(number)
-                    next = any(
-                        [
-                            self.check_lines(number),
-                            self.check_columns(number),
-                        ]
-                    )
+                self.STOP_ITERATION = False
 
-                    if next:
-                        global_next = True
+                while not self.STOP_ITERATION:
+                    self.disable_values(number)
+                    self.check_lines(number)
+                    self.check_columns(number)
 
-        self.check_unique_possibility()
+                    if not self.STOP_ITERATION:
+                        self.STOP_PROCESS = False
 
         self.assert_finish()
 
-    def count_values(self):
-        count = len([cell for _, _, _, cell in self.get_cells(self.grid) if cell])
-        print(f"Nombre de valeurs initiales : {count}")
+    def count_initial_values(self):
+        count = len([cell for _, _, _, cell in self.get_cells(self.sudoku) if cell])
+        print(f"\nNombre de valeurs initiales : {count}\n")
 
-    def disable(self, number):
-        for _i_line, _i_cell, _, cell in self.get_cells(self.grid):
+    def disable_values(self, number):
+        for _i_line, _i_cell, _, cell in self.get_cells(self.sudoku):
             if cell:
                 self.available[number][_i_line][_i_cell] = None
 
             if cell != number + 1:
                 continue
 
-            for i_line, i_cell, _, _ in self.get_cells(self.grid):
+            for i_line, i_cell, _, _ in self.get_cells(self.sudoku):
                 same_line = i_line == _i_line
                 same_col = i_cell == _i_cell
                 same_block = i_line // 3 == _i_line // 3 and i_cell // 3 == _i_cell // 3
@@ -83,67 +80,49 @@ class Game:
             self.available[number][line_values[1][0]][line_values[1][1]] = number + 1
 
     def check_lines(self, number):
-        for i_line, line in enumerate(self.available[number]):
-            line_values = []
+        self.STOP_ITERATION = True
 
-            for i_cell, _ in enumerate(line):
-                if line[i_cell] == number + 1:
-                    line_values.append([i_line, i_cell])
+        for i_line, line in enumerate(self.available[number]):
+            line_values = [
+                [i_line, i_cell]
+                for i_cell, _ in enumerate(line)
+                if line[i_cell] == number + 1
+            ]
 
             if len(line_values) == 1:
-                self.grid[line_values[0][0]][line_values[0][1]] = number + 1
-                return True
+                self.sudoku[line_values[0][0]][line_values[0][1]] = number + 1
+
+                self.STOP_ITERATION = False
 
             self.disable_block(number, line_values)
 
     def check_columns(self, number):
-        for column in range(9):
-            column_values = []
-            position = []
+        self.STOP_ITERATION = True
 
-            for i_line, line in enumerate(self.available[number]):
-                if line[column] == number + 1:
-                    position = [i_line, column]
-                    column_values.append(1)
+        for column in range(9):
+            column_values = [
+                [i_line, column]
+                for i_line, line in enumerate(self.available[number])
+                if line[column] == number + 1
+            ]
 
             if len(column_values) == 1:
-                self.grid[position[0]][position[1]] = number + 1
-                return True
+                self.sudoku[column_values[0][0]][column_values[0][1]] = number + 1
 
-    def check_unique_possibility(self):
-        possibility = [[[] for _ in range(9)] for _ in range(9)]
-
-        for number in range(9):
-            for i_line, i_cell, _, cell in self.get_cells(self.available[number]):
-                possibility[i_line][i_cell].append(cell)
-
-        for i_line, i_cell, _, cell in self.get_cells(possibility):
-            possible_values = [value for value in cell if value]
-
-            if len(set(possible_values)) == 1:
-                if self.grid[i_line][i_cell] == possible_values[0]:
-                    return
-
-                self.grid[i_line][i_cell] = possible_values[0]
-                return True
+                self.STOP_ITERATION = False
 
     def assert_finish(self):
-        error = False
+        has_wrong_line = any([len(set(line)) != 9 for line in self.sudoku])
 
-        for line in self.grid:
-            if len(set(line)) != 9:
-                error = True
+        has_wrong_column = any(
+            [
+                len(set([line[column] for line in self.sudoku])) != 9
+                for column in range(9)
+            ]
+        )
 
-        for column in range(9):
-            column_values = []
-            for line in self.grid:
-                column_values.append(line[column])
-
-            if len(set(column_values)) != 9:
-                error = True
-
-        if error:
-            self.print(self.grid)
+        if has_wrong_line or has_wrong_column:
+            self.print_grid(self.sudoku)
             raise AssertionError("Sodoku resolution failed !")
 
-        self.print(self.grid)
+        self.print_grid(self.sudoku)
