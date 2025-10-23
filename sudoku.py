@@ -14,7 +14,9 @@ class Game:
     ]
 
     def __init__(self):
-        self.available1 = [[1 for _ in range(9)] for _ in range(9)]
+        self.available = [
+            [[number + 1 for _ in range(9)] for _ in range(9)] for number in range(9)
+        ]
 
     def get_cells(self, element):
         for i_line, line in enumerate(element):
@@ -35,47 +37,26 @@ class Game:
             if index == len(line) - 1:
                 print(*["- " * (len(line) + 2)])
 
-    def process1(self):
-        next = True
-        while next:
-            self.disable1()
-            next = self.check1()
+    def process(self):
+        global_next = True
+        while global_next:
+            global_next = False
 
-    def check1(self):
-        for i_line, line in enumerate(self.available1):
-            line_values = []
-            position = []
+            for number in range(9):
+                next = True
+                while next:
+                    self.disable(number)
+                    next = self.check(number)
 
-            for i_cell, _ in enumerate(line):
-                if line[i_cell] == 1:
-                    position = [i_line, i_cell]
-                    line_values.append(1)
+                    if next:
+                        global_next = True
 
-            if len(line_values) == 1:
-                self.GRID[position[0]][position[1]] = 1
-                print(f"Valeur 1 trouvée en position {position}")
-                return True
-
-        for column in range(9):
-            column_values = []
-            position = []
-
-            for i_line, line in enumerate(self.available1):
-                if line[column] == 1:
-                    position = [i_line, column]
-                    column_values.append(1)
-
-            if len(column_values) == 1:
-                self.GRID[position[0]][position[1]] = 1
-                print(f"Valeur 1 trouvée en position {position}")
-                return True
-
-    def disable1(self):
+    def disable(self, number):
         for _i_line, _i_cell, _, cell in self.get_cells(self.GRID):
             if cell:
-                self.available1[_i_line][_i_cell] = None
+                self.available[number][_i_line][_i_cell] = None
 
-            if cell != 1:
+            if cell != number + 1:
                 continue
 
             for i_line, i_cell, _, _ in self.get_cells(self.GRID):
@@ -84,10 +65,49 @@ class Game:
                 same_block = i_line // 3 == _i_line // 3 and i_cell // 3 == _i_cell // 3
 
                 if any([same_line, same_col, same_block]):
-                    self.available1[i_line][i_cell] = None
+                    self.available[number][i_line][i_cell] = None
+
+    def check(self, number):
+        for i_line, line in enumerate(self.available[number]):
+            line_values = []
+            position = []
+
+            for i_cell, _ in enumerate(line):
+                if line[i_cell] == number + 1:
+                    position = [i_line, i_cell]
+                    line_values.append(number + 1)
+
+            if len(line_values) == 1:
+                self.GRID[position[0]][position[1]] = number + 1
+                return True
+
+        for column in range(9):
+            column_values = []
+            position = []
+
+            for i_line, line in enumerate(self.available[number]):
+                if line[column] == 1:
+                    position = [i_line, column]
+                    column_values.append(1)
+
+            if len(column_values) == 1:
+                self.GRID[position[0]][position[1]] = number + 1
+                return True
+
+    def assert_finish(self):
+        for line in self.GRID:
+            assert len(set(line)) == 9
+
+        for column in range(9):
+            column_values = []
+            for line in self.GRID:
+                column_values.append(line[column])
+
+            assert len(set(column_values)) == 9
 
 
 game = Game()
-game.process1()
 game.print(game.GRID)
-game.print(game.available1)
+game.process()
+game.print(game.GRID)
+game.assert_finish()
