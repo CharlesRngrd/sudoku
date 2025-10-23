@@ -1,19 +1,6 @@
 class Game:
-    GRID = [
-        [5, 3, None, None, 7, None, None, None, None],
-        [6, None, None, 1, 9, 5, None, None, None],
-        [None, 9, 8, None, None, None, None, 6, None],
-        # ---
-        [8, None, None, None, 6, None, None, None, 3],
-        [4, None, None, 8, None, 3, None, None, 1],
-        [7, None, None, None, 2, None, None, None, 6],
-        # ---
-        [None, 6, None, None, None, None, 2, 8, None],
-        [None, None, None, 4, 1, 9, None, None, 5],
-        [None, None, None, None, 8, None, None, 7, 9],
-    ]
-
-    def __init__(self):
+    def __init__(self, grid):
+        self.grid = grid
         self.available = [
             [[number + 1 for _ in range(9)] for _ in range(9)] for number in range(9)
         ]
@@ -57,14 +44,14 @@ class Game:
                         global_next = True
 
     def disable(self, number):
-        for _i_line, _i_cell, _, cell in self.get_cells(self.GRID):
+        for _i_line, _i_cell, _, cell in self.get_cells(self.grid):
             if cell:
                 self.available[number][_i_line][_i_cell] = None
 
             if cell != number + 1:
                 continue
 
-            for i_line, i_cell, _, _ in self.get_cells(self.GRID):
+            for i_line, i_cell, _, _ in self.get_cells(self.grid):
                 same_line = i_line == _i_line
                 same_col = i_cell == _i_cell
                 same_block = i_line // 3 == _i_line // 3 and i_cell // 3 == _i_cell // 3
@@ -83,7 +70,7 @@ class Game:
                     line_values.append(number + 1)
 
             if len(line_values) == 1:
-                self.GRID[position[0]][position[1]] = number + 1
+                self.grid[position[0]][position[1]] = number + 1
                 return True
 
     def check_columns(self, number):
@@ -97,23 +84,16 @@ class Game:
                     column_values.append(1)
 
             if len(column_values) == 1:
-                self.GRID[position[0]][position[1]] = number + 1
+                self.grid[position[0]][position[1]] = number + 1
                 return True
 
     def assert_finish(self):
-        for line in self.GRID:
+        for line in self.grid:
             assert len(set(line)) == 9
 
         for column in range(9):
             column_values = []
-            for line in self.GRID:
+            for line in self.grid:
                 column_values.append(line[column])
 
             assert len(set(column_values)) == 9
-
-
-game = Game()
-game.print(game.GRID)
-game.process()
-game.print(game.GRID)
-game.assert_finish()
