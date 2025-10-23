@@ -25,6 +25,8 @@ class Game:
                 print(*["- " * (len(line) + 2)])
 
     def process(self):
+        self.count_values()
+
         global_next = True
         while global_next:
             global_next = False
@@ -42,6 +44,14 @@ class Game:
 
                     if next:
                         global_next = True
+
+        self.check_unique_possibility()
+
+        self.assert_finish()
+
+    def count_values(self):
+        count = len([cell for _, _, _, cell in self.get_cells(self.grid) if cell])
+        print(f"Nombre de valeurs initiales : {count}")
 
     def disable(self, number):
         for _i_line, _i_cell, _, cell in self.get_cells(self.grid):
@@ -87,13 +97,40 @@ class Game:
                 self.grid[position[0]][position[1]] = number + 1
                 return True
 
+    def check_unique_possibility(self):
+        possibility = [[[] for _ in range(9)] for _ in range(9)]
+
+        for number in range(9):
+            for i_line, i_cell, _, cell in self.get_cells(self.available[number]):
+                possibility[i_line][i_cell].append(cell)
+
+        for i_line, i_cell, _, cell in self.get_cells(possibility):
+            possible_values = [value for value in cell if value]
+
+            if len(set(possible_values)) == 1:
+                if self.grid[i_line][i_cell] == possible_values[0]:
+                    return
+
+                self.grid[i_line][i_cell] = possible_values[0]
+                return True
+
     def assert_finish(self):
+        error = False
+
         for line in self.grid:
-            assert len(set(line)) == 9
+            if len(set(line)) != 9:
+                error = True
 
         for column in range(9):
             column_values = []
             for line in self.grid:
                 column_values.append(line[column])
 
-            assert len(set(column_values)) == 9
+            if len(set(column_values)) != 9:
+                error = True
+
+        if error:
+            self.print(self.grid)
+            raise AssertionError("Sodoku resolution failed !")
+
+        print("Sudoku completed :)")
