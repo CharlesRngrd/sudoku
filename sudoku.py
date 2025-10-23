@@ -69,19 +69,32 @@ class Game:
                 if any([same_line, same_col, same_block]):
                     self.available[number][i_line][i_cell] = None
 
+    def disable_block(self, number, line_values):
+        if len(line_values) == 2 and line_values[0][1] // 3 == line_values[1][1] // 3:
+            for i_line, i_cell, _, cell in self.get_cells(self.available[number]):
+                if (
+                    cell == number + 1
+                    and i_line // 3 == line_values[0][0] // 3
+                    and i_cell // 3 == line_values[0][1] // 3
+                ):
+                    self.available[number][i_line][i_cell] = None
+
+            self.available[number][line_values[0][0]][line_values[0][1]] = number + 1
+            self.available[number][line_values[1][0]][line_values[1][1]] = number + 1
+
     def check_lines(self, number):
         for i_line, line in enumerate(self.available[number]):
             line_values = []
-            position = []
 
             for i_cell, _ in enumerate(line):
                 if line[i_cell] == number + 1:
-                    position = [i_line, i_cell]
-                    line_values.append(number + 1)
+                    line_values.append([i_line, i_cell])
 
             if len(line_values) == 1:
-                self.grid[position[0]][position[1]] = number + 1
+                self.grid[line_values[0][0]][line_values[0][1]] = number + 1
                 return True
+
+            self.disable_block(number, line_values)
 
     def check_columns(self, number):
         for column in range(9):
@@ -133,4 +146,4 @@ class Game:
             self.print(self.grid)
             raise AssertionError("Sodoku resolution failed !")
 
-        print("Sudoku completed :)")
+        self.print(self.grid)
