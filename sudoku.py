@@ -40,9 +40,10 @@ class Game:
                     if not self.STOP_ITERATION:
                         self.STOP_PROCESS = False
 
-            self.disable_values(number)
+            for number in range(9):
+                self.disable_values(number)
+
             if self.check_unique_possibility():
-                self.STOP_ITERATION = False
                 self.STOP_PROCESS = False
 
         self.assert_finish()
@@ -154,19 +155,20 @@ class Game:
 
                         return True
 
-    def check_unique_possibility(self):
+    def check_unique_possibility(self) -> bool:
+        """Vérifie s'il y a des cellules avec une seule valeur possible"""
+
+        update = False
+
         for i_line, line in enumerate(GridAvailableList.POSSIBILITIES):
             for i_cell, cells in enumerate(line):
                 if len(cells) == 1:
                     x = GridCell(i_line, i_cell, cells[0])
-                    if self.sudoku.get_cell(x).value != cells[0]:
-                        print("weirdness !")
-                        print(self.sudoku.get_cell(x).value, i_line, i_cell, cells[0])
-                        return
+                    if not self.sudoku.get_cell(x).value:
+                        self.sudoku.update_cell(x)
+                        update = True
 
-                    self.sudoku.update_cell(x)
-                    print("goodness !")
-                    return True
+        return update
 
     def assert_finish(self):
         if not (
@@ -176,5 +178,7 @@ class Game:
             print(
                 f"Nombre de valeurs finales : {self.sudoku.count_values()} | Failure :(\n"
             )
+
+            print(GridAvailableList.POSSIBILITIES)
 
         print(self.sudoku)
