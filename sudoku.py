@@ -1,15 +1,17 @@
 from typing import List
-from grid import Grid, GridCell
+from grid import Grid, GridAvailableList, GridAvailableSingle, GridCell
 
 
 class Game:
-    STOP_PROCESS = False
-    STOP_ITERATION = False
+    STOP_PROCESS: bool = False
+    STOP_ITERATION: bool = False
 
     def __init__(self, sudoku):
+        GridAvailableList.define_possibilities()
+
         self.sudoku: Grid = Grid(sudoku)
-        self.available: List[Grid] = [
-            Grid([[number + 1 for _ in range(9)] for _ in range(9)])
+        self.available: List[GridAvailableSingle] = [
+            GridAvailableSingle([[number + 1 for _ in range(9)] for _ in range(9)])
             for number in range(9)
         ]
 
@@ -38,9 +40,10 @@ class Game:
                     if not self.STOP_ITERATION:
                         self.STOP_PROCESS = False
 
-            # self.disable_values(number)
-            # if self.check_unique_possibility():
-            #     self.STOP_ITERATION = False
+            self.disable_values(number)
+            if self.check_unique_possibility():
+                self.STOP_ITERATION = False
+                self.STOP_PROCESS = False
 
         self.assert_finish()
 
@@ -50,7 +53,7 @@ class Game:
         for cell in self.sudoku.iter_cells():
             # S'il y a une valeur dans le sudoku, alors la place n'est plus disponible :
             if cell.value:
-                self.available[number].update_cell(cell.drop_value())
+                self.available[number].reset_cell(cell)
 
             # Si cette valeur n'est pas celle observée, alors on arrête là :
             if cell.value != number + 1:
@@ -69,9 +72,9 @@ class Game:
                         ),
                     ]
                 ):
-                    self.available[number].update_cell(cell_bis.drop_value())
+                    self.available[number].reset_cell(cell_bis)
 
-    def matching_cells(self, cells, number: int) -> List[GridCell]:
+    def matching_cells(self, cells: List[GridCell], number: int) -> List[GridCell]:
         """Retourne la liste des cellules qui ont une valeur donnée"""
 
         return [cell for cell in cells if cell.value == number + 1]
@@ -116,9 +119,12 @@ class Game:
             cells_valid = self.matching_cells(cells, number)
 
             # Si la valeur observée n'a qu'une place disponible, alors on actualise le sudoku :
-            if len(cells) == 1:
-                cells[0].value = number + 1
-                self.sudoku.update_cell(cells[0])
+            if len(cells_valid) == 1:
+                cells_valid[0].value = number + 1
+                self.sudoku.update_cell(cells_valid[0])
+
+                for cell in cells:
+                    self.available[number].reset_cell(cell)
 
                 return True
 
@@ -131,7 +137,7 @@ class Game:
                         and cells_bis.line == cells_valid[0].line
                         and cells_bis.get_bloc_col() != cells_valid[0].get_bloc_col()
                     ):
-                        self.available[number].update_cell(cells_bis.drop_value())
+                        self.available[number].reset_cell(cells_bis)
 
                         return True
 
@@ -144,29 +150,22 @@ class Game:
                         and cells_bis.column == cells_valid[0].column
                         and cells_bis.get_bloc_line() != cells_valid[0].get_bloc_line()
                     ):
-                        self.available[number].update_cell(cells_bis.drop_value())
+                        self.available[number].reset_cell(cells_bis)
 
                         return True
 
     def check_unique_possibility(self):
-        def get_cells(element):
-            for i_line, line in enumerate(element):
-                for i_cell, cell in enumerate(line):
-                    yield i_line, i_cell, line, cell
+        for i_line, line in enumerate(GridAvailableList.POSSIBILITIES):
+            for i_cell, cells in enumerate(line):
+                if len(cells) == 1:
+                    x = GridCell(i_line, i_cell, cells[0])
+                    if self.sudoku.get_cell(x).value != cells[0]:
+                        print("weirdness !")
+                        print(self.sudoku.get_cell(x).value, i_line, i_cell, cells[0])
+                        return
 
-        possibility = [[[] for _ in range(9)] for _ in range(9)]
-
-        for number in range(9):
-            for cell in self.available[number].iter_cells():
-                if not cell.value:
-                    continue
-
-                possibility[cell.line][cell.column].append(cell.value)
-
-        for i_line, i_cell, _, cell in get_cells(possibility):
-            if len(set(cell)) == 1:
-                if not self.sudoku.get_cell(GridCell(i_line, i_cell)):
-                    self.sudoku.update_cell(i_line, i_cell, cell[0])
+                    self.sudoku.update_cell(x)
+                    print("goodness !")
                     return True
 
     def assert_finish(self):
@@ -174,6 +173,8 @@ class Game:
             self.sudoku.check_columns_completed()
             and self.sudoku.check_columns_completed()
         ):
-            print("Sodoku resolution failed !")
+            print(
+                f"Nombre de valeurs finales : {self.sudoku.count_values()} | Failure :(\n"
+            )
 
         print(self.sudoku)

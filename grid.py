@@ -1,4 +1,4 @@
-from typing import Generator, List, Self
+from typing import Generator, List
 
 
 class GridCell:
@@ -7,14 +7,28 @@ class GridCell:
         self.column = column
         self.value = value
 
-    def drop_value(self) -> Self:
-        return GridCell(self.line, self.column, None)
-
     def get_bloc_line(self) -> int:
         return self.line // 3
 
     def get_bloc_col(self) -> int:
         return self.column // 3
+
+
+class GridAvailableList:
+    POSSIBILITIES = None
+
+    @classmethod
+    def define_possibilities(cls) -> None:
+        cls.POSSIBILITIES = [
+            [[number + 1 for number in range(9)] for _ in range(9)] for _ in range(9)
+        ]
+
+    @classmethod
+    def remove_possibility(cls, cell: GridCell, old_value: int) -> None:
+        """Actualise la liste des valeurs possibles pour une cellule du sudoku"""
+
+        if old_value:
+            cls.POSSIBILITIES[cell.line][cell.column].remove(old_value)
 
 
 class Grid:
@@ -83,22 +97,22 @@ class Grid:
             for cell in cells:
                 yield cell
 
-    def get_cell(self, position: GridCell) -> GridCell:
+    def get_cell(self, cell: GridCell) -> GridCell:
         """Retourne la valeur d'une cellule de la grille"""
 
-        GridCell.value = self._data[position.line][position.column]
+        GridCell.value = self._data[cell.line][cell.column]
 
         return GridCell
 
-    def update_cell(self, position: GridCell) -> None:
+    def update_cell(self, cell: GridCell) -> None:
         """Modifie la valeur d'une cellule de la grille"""
 
-        self._data[position.line][position.column] = position.value
+        self._data[cell.line][cell.column] = cell.value
 
     def count_values(self) -> int:
         """Retourne le nombre de valeurs remplies dans la grille"""
 
-        return len([position.value for position in self.iter_cells() if position.value])
+        return len([cell.value for cell in self.iter_cells() if cell.value])
 
     def check_lines_completed(self) -> bool:
         """Vérifie si toutes les lignes contiennent tous les chiffres de 1 à 9"""
@@ -114,3 +128,16 @@ class Grid:
                 for column in range(9)
             ]
         )
+
+
+class GridAvailableSingle(Grid):
+    def update_cell(self, cell: GridCell) -> None:
+        """Modifie la valeur d'une cellule de la grille"""
+
+        raise NotImplementedError("Please use GridAvailableSingle.reset_cell instead !")
+
+    def reset_cell(self, cell: GridCell) -> None:
+        """Modifie la valeur d'une cellule de la grille"""
+
+        GridAvailableList.remove_possibility(cell, self._data[cell.line][cell.column])
+        self._data[cell.line][cell.column] = None
