@@ -7,13 +7,14 @@ class Game:
     STOP_ITERATION: bool = False
 
     def __init__(self, sudoku):
-        GridAvailableList.define_possibilities()
-
         self.sudoku: Grid = Grid(sudoku)
         self.available: List[GridAvailableSingle] = [
             GridAvailableSingle([[number + 1 for _ in range(9)] for _ in range(9)])
             for number in range(9)
         ]
+
+        self.available_liste = GridAvailableList()
+        self.available_liste.define_possibilities()
 
     def process(self) -> None:
         """Processus principal"""
@@ -160,13 +161,12 @@ class Game:
 
         update = False
 
-        for i_line, line in enumerate(GridAvailableList.POSSIBILITIES):
-            for i_cell, cells in enumerate(line):
-                if len(cells) == 1:
-                    x = GridCell(i_line, i_cell, cells[0])
-                    if not self.sudoku.get_cell(x).value:
-                        self.sudoku.update_cell(x)
-                        update = True
+        for cell in self.available_liste.iter_cells():
+            if len(cell.value) == 1:
+                cell.value = cell.value[0]
+                if not self.sudoku.get_cell(cell).value:
+                    self.sudoku.update_cell(cell)
+                    update = True
 
         return update
 
@@ -179,6 +179,6 @@ class Game:
                 f"Nombre de valeurs finales : {self.sudoku.count_values()} | Failure :(\n"
             )
 
-            print(GridAvailableList.POSSIBILITIES)
+            print(self.available_liste)
 
         print(self.sudoku)

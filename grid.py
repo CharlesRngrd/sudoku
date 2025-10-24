@@ -1,8 +1,10 @@
-from typing import Generator, List
+from typing import Generator, List, Union
 
 
 class GridCell:
-    def __init__(self, line: int, column: int, value: int = None) -> None:
+    def __init__(
+        self, line: int, column: int, value: Union[List[int], int] = None
+    ) -> None:
         self.line = line
         self.column = column
         self.value = value
@@ -14,25 +16,8 @@ class GridCell:
         return self.column // 3
 
 
-class GridAvailableList:
-    POSSIBILITIES = None
-
-    @classmethod
-    def define_possibilities(cls) -> None:
-        cls.POSSIBILITIES = [
-            [[number + 1 for number in range(9)] for _ in range(9)] for _ in range(9)
-        ]
-
-    @classmethod
-    def remove_possibility(cls, cell: GridCell, old_value: int) -> None:
-        """Actualise la liste des valeurs possibles pour une cellule du sudoku"""
-
-        if old_value:
-            cls.POSSIBILITIES[cell.line][cell.column].remove(old_value)
-
-
 class Grid:
-    def __init__(self, data: List[List[int]]) -> None:
+    def __init__(self, data: List[List[Union[List[int], int]]]) -> None:
         self._data = data
 
     def __repr__(self) -> str:
@@ -42,11 +27,18 @@ class Grid:
 
         for cells in self.iter_lines():
             separator = ["-"] * len(cells)
-            string = [cell.value or " " for cell in cells]
 
-            for position in (6, 3):
-                separator.insert(position, "|")
-                string.insert(position, "|")
+            if isinstance(cells[0].value, list):
+                pad = 10
+                separator = ["-"] * (pad * 9)
+                string = [str(cell.value).ljust(pad * 2, " ") or " " for cell in cells]
+            else:
+                separator = ["-"] * len(cells)
+                string = [cell.value or " " for cell in cells]
+
+                for position in (6, 3):
+                    separator.insert(position, "|")
+                    string.insert(position, "|")
 
             if cells[0].line in (3, 6):
                 repr.append(" ".join(map(str, separator)))
@@ -130,8 +122,32 @@ class Grid:
         )
 
 
+class GridAvailableList(Grid):
+    POSSIBILITIES = None
+
+    def __init__(self) -> None:
+        pass
+
+    @property
+    def _data(self):
+        return self.POSSIBILITIES
+
+    @classmethod
+    def define_possibilities(cls) -> None:
+        cls.POSSIBILITIES = [
+            [[number + 1 for number in range(9)] for _ in range(9)] for _ in range(9)
+        ]
+
+    @classmethod
+    def remove_possibility(cls, cell: GridCell, old_value: int) -> None:
+        """Actualise la liste des valeurs possibles pour une cellule du sudoku"""
+
+        if old_value:
+            cls.POSSIBILITIES[cell.line][cell.column].remove(old_value)
+
+
 class GridAvailableSingle(Grid):
-    def update_cell(self, cell: GridCell) -> None:
+    def update_cell(self, _: GridCell) -> None:
         """Modifie la valeur d'une cellule de la grille"""
 
         raise NotImplementedError("Please use GridAvailableSingle.reset_cell instead !")
