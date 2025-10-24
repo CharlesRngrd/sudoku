@@ -1,4 +1,4 @@
-from grid import Grid
+from grid import Grid, GridCell
 
 
 class Game:
@@ -46,20 +46,25 @@ class Game:
         self.assert_finish()
 
     def disable_values(self, number):
-        for _i_line, _i_cell, _, cell in self.sudoku.iter_cells():
-            if cell:
-                self.available[number][_i_line][_i_cell] = None
+        for position in self.sudoku.iter_cells():
+            if position.value:
+                self.available[number][position.line][position.column] = None
 
-            if cell != number + 1:
+            if position.value != number + 1:
                 continue
 
-            for i_line, i_cell, _, _ in self.sudoku.iter_cells():
-                same_line = i_line == _i_line
-                same_col = i_cell == _i_cell
-                same_block = i_line // 3 == _i_line // 3 and i_cell // 3 == _i_cell // 3
+            for position_bis in self.sudoku.iter_cells():
+                same_line = position_bis.line == position.line
+                same_col = position_bis.column == position.column
+                same_block = (
+                    position_bis.line // 3 == position.line // 3
+                    and position_bis.column // 3 == position.column // 3
+                )
 
                 if any([same_line, same_col, same_block]):
-                    self.available[number][i_line][i_cell] = None
+                    self.available[number][position_bis.line][position_bis.column] = (
+                        None
+                    )
 
     def check_lines(self, number):
         for i_line, line in enumerate(self.available[number]):
@@ -71,7 +76,7 @@ class Game:
 
             if len(line_values) == 1:
                 self.sudoku.update_cell(
-                    line_values[0][0], line_values[0][1], number + 1
+                    GridCell(line_values[0][0], line_values[0][1], number + 1)
                 )
 
                 return True
@@ -86,7 +91,7 @@ class Game:
 
             if len(column_values) == 1:
                 self.sudoku.update_cell(
-                    column_values[0][0], column_values[0][1], number + 1
+                    GridCell(column_values[0][0], column_values[0][1], number + 1)
                 )
 
                 return True
@@ -133,7 +138,7 @@ class Game:
 
                 if len(block_values) == 1:
                     self.sudoku.update_cell(
-                        block_values[0][0], block_values[0][1], number + 1
+                        GridCell(block_values[0][0], block_values[0][1], number + 1)
                     )
 
                     return True
@@ -150,7 +155,7 @@ class Game:
 
         for i_line, i_cell, _, cell in self.get_cells(possibility):
             if len(set(cell)) == 1:
-                if not self.sudoku.get_cell(i_line, i_cell):
+                if not self.sudoku.get_cell(GridCell(i_line, i_cell)):
                     self.sudoku.update_cell(i_line, i_cell, cell[0])
                     return True
 
@@ -161,4 +166,4 @@ class Game:
         ):
             print("Sodoku resolution failed !")
 
-        self.sudoku.print()
+        print(self.sudoku)

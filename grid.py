@@ -1,51 +1,79 @@
+from typing import Generator, List, Tuple
+
+
+class GridCell:
+    def __init__(self, line: int, column: int, value: int = None) -> None:
+        self.line = line
+        self.column = column
+        self.value = value
+
+
 class Grid:
-    def __init__(self, data) -> None:
+    def __init__(self, data: List[List[int]]) -> None:
         self._data = data
 
-    def print(self) -> None:
-        """Affiche la grille avec un séparateur 3X3"""
+    def __repr__(self) -> str:
+        """Affiche la grille avec un séparateur 3x3"""
 
-        for index, line in enumerate(self._data):
-            separator = ["-"] * len(line)
-            to_print = [cell or " " for cell in line]
+        repr: List = []
+
+        for index_line, cells in self.iter_lines():
+            separator = ["-"] * len(cells)
+            string = [cell.value or " " for cell in cells]
 
             for position in (6, 3):
                 separator.insert(position, "|")
-                to_print.insert(position, "|")
+                string.insert(position, "|")
 
-            if index in (3, 6):
-                print(*separator)
+            if index_line in (3, 6):
+                repr.append(" ".join(map(str, separator)))
 
-            print(*to_print)
+            repr.append(" ".join(map(str, string)))
 
-    def get_cell(self, index_line, index_column):
+        return "\n".join(repr)
+
+    def get_cell(self, position: GridCell) -> GridCell:
         """Retourne la valeur d'une cellule de la grille"""
 
-        return self._data[index_line][index_column]
+        GridCell.value = self._data[position.line][position.column]
 
-    def update_cell(self, index_line, index_column, value):
+        return GridCell
+
+    def update_cell(self, position: GridCell) -> None:
         """Modifie la valeur d'une cellule de la grille"""
 
-        self._data[index_line][index_column] = value
+        self._data[position.line][position.column] = position.value
 
-    def iter_cells(self):
+    def iter_cells(self) -> Generator[GridCell, None, None]:
         """Retourne la liste complète des valeurs de la grille"""
 
-        for i_line, line in enumerate(self._data):
-            for i_cell, cell in enumerate(line):
-                yield i_line, i_cell, line, cell
+        for _, cells in self.iter_lines():
+            for cell in cells:
+                yield cell
 
-    def count_values(self):
+    def iter_lines(self) -> Generator[Tuple[int, List[GridCell]], None, None]:
+        """Retourne la liste des lignes de la grille"""
+
+        for index_line, line in enumerate(self._data):
+            yield (
+                index_line,
+                [
+                    GridCell(index_line, index_cell, cell)
+                    for index_cell, cell in enumerate(line)
+                ],
+            )
+
+    def count_values(self) -> int:
         """Retourne le nombre de valeurs remplies dans la grille"""
 
-        return len([cell for _, _, _, cell in self.iter_cells() if cell])
+        return len([position.value for position in self.iter_cells() if position.value])
 
-    def check_lines_completed(self):
+    def check_lines_completed(self) -> bool:
         """Vérifie si toutes les lignes contiennent tous les chiffres de 1 à 9"""
 
         return all([len(set(line)) == 9 for line in self._data])
 
-    def check_columns_completed(self):
+    def check_columns_completed(self) -> bool:
         """Vérifie si toutes les colonnes contiennent tous les chiffres de 1 à 9"""
 
         return all(
