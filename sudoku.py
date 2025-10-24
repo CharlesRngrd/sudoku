@@ -1,3 +1,4 @@
+from typing import List
 from grid import Grid, GridCell
 
 
@@ -6,17 +7,15 @@ class Game:
     STOP_ITERATION = False
 
     def __init__(self, sudoku):
-        self.sudoku = Grid(sudoku)
-        self.available = [
-            [[number + 1 for _ in range(9)] for _ in range(9)] for number in range(9)
+        self.sudoku: Grid = Grid(sudoku)
+        self.available: List[Grid] = [
+            Grid([[number + 1 for _ in range(9)] for _ in range(9)])
+            for number in range(9)
         ]
 
-    def get_cells(self, element):
-        for i_line, line in enumerate(element):
-            for i_cell, cell in enumerate(line):
-                yield i_line, i_cell, line, cell
+    def process(self) -> None:
+        """Processus principal"""
 
-    def process(self):
         print(f"\nNombre de valeurs initiales : {self.sudoku.count_values()}\n")
 
         while not self.STOP_PROCESS:
@@ -39,121 +38,132 @@ class Game:
                     if not self.STOP_ITERATION:
                         self.STOP_PROCESS = False
 
-            self.disable_values(number)
-            if self.check_unique_possibility():
-                self.STOP_ITERATION = False
+            # self.disable_values(number)
+            # if self.check_unique_possibility():
+            #     self.STOP_ITERATION = False
 
         self.assert_finish()
 
-    def disable_values(self, number):
-        for position in self.sudoku.iter_cells():
-            if position.value:
-                self.available[number][position.line][position.column] = None
+    def disable_values(self, number: int) -> None:
+        """Actualise les place indisponibles pour une valeur observée"""
 
-            if position.value != number + 1:
+        for cell in self.sudoku.iter_cells():
+            # S'il y a une valeur dans le sudoku, alors la place n'est plus disponible :
+            if cell.value:
+                self.available[number].update_cell(cell.drop_value())
+
+            # Si cette valeur n'est pas celle observée, alors on arrête là :
+            if cell.value != number + 1:
                 continue
 
-            for position_bis in self.sudoku.iter_cells():
-                same_line = position_bis.line == position.line
-                same_col = position_bis.column == position.column
-                same_block = (
-                    position_bis.line // 3 == position.line // 3
-                    and position_bis.column // 3 == position.column // 3
-                )
+            # Si cette valeur est celle observée,
+            # alors la valeur n'est plus disponible dans la ligne, la colonne et le bloc :
+            for cell_bis in self.available[number].iter_cells():
+                if any(
+                    [
+                        cell_bis.line == cell.line,
+                        cell_bis.column == cell.column,
+                        (
+                            cell_bis.get_bloc_line() == cell.get_bloc_line()
+                            and cell_bis.get_bloc_col() == cell.get_bloc_col()
+                        ),
+                    ]
+                ):
+                    self.available[number].update_cell(cell_bis.drop_value())
 
-                if any([same_line, same_col, same_block]):
-                    self.available[number][position_bis.line][position_bis.column] = (
-                        None
-                    )
+    def matching_cells(self, cells, number: int) -> List[GridCell]:
+        """Retourne la liste des cellules qui ont une valeur donnée"""
 
-    def check_lines(self, number):
-        for i_line, line in enumerate(self.available[number]):
-            line_values = [
-                [i_line, i_cell]
-                for i_cell, _ in enumerate(line)
-                if line[i_cell] == number + 1
-            ]
+        return [cell for cell in cells if cell.value == number + 1]
 
-            if len(line_values) == 1:
-                self.sudoku.update_cell(
-                    GridCell(line_values[0][0], line_values[0][1], number + 1)
-                )
+    def check_lines(self, number: int) -> bool:
+        """
+        Vérifie dans chaque ligne :
+        - Si la valeur observée n'a qu'une place disponible, alors on actualise le sudoku.
+        """
 
-                return True
+        for cells in self.available[number].iter_lines():
+            cells_valid = self.matching_cells(cells, number)
 
-    def check_columns(self, number):
-        for column in range(9):
-            column_values = [
-                [i_line, column]
-                for i_line, line in enumerate(self.available[number])
-                if line[column] == number + 1
-            ]
-
-            if len(column_values) == 1:
-                self.sudoku.update_cell(
-                    GridCell(column_values[0][0], column_values[0][1], number + 1)
-                )
+            if len(cells_valid) == 1:
+                self.sudoku.update_cell(cells_valid[0])
 
                 return True
 
-    def check_blocs(self, number):
-        for line_bloc in range(3):
-            for column_bloc in range(3):
-                block_values = []
+    def check_columns(self, number: int) -> bool:
+        """
+        Vérifie dans chaque colonne :
+        - Si la valeur observée n'a qu'une place disponible, alors on actualise le sudoku.
+        """
 
-                for i_line, i_cell, _, cell in self.get_cells(self.available[number]):
+        for cells in self.available[number].iter_columns():
+            cells_valid = self.matching_cells(cells, number)
+
+            if len(cells_valid) == 1:
+                self.sudoku.update_cell(cells_valid[0])
+
+                return True
+
+    def check_blocs(self, number: int) -> bool:
+        """
+        Vérifie dans chaque bloc :
+        - Si la valeur observée n'a qu'une place disponible, alors on actualise le sudoku.
+        - Si la valeur obserée a plusieurs places disponibles mais uniquement que ces places sont alignées,
+          alors on désactive cette valeur dans le reste du bloc.
+        """
+
+        for cells in self.available[number].iter_blocs():
+            cells_valid = self.matching_cells(cells, number)
+
+            # Si la valeur observée n'a qu'une place disponible, alors on actualise le sudoku :
+            if len(cells) == 1:
+                cells[0].value = number + 1
+                self.sudoku.update_cell(cells[0])
+
+                return True
+
+            # S'il y a plusieurs fois la valeur observée dans le bloc et qu'elles sont sur une seule ligne,
+            # alors on désactive cette valeur dans le reste du bloc :
+            if len(set([cell.line for cell in cells_valid])) == 1:
+                for cells_bis in self.available[number].iter_cells():
                     if (
-                        cell == number + 1
-                        and i_line // 3 == line_bloc
-                        and i_cell // 3 == column_bloc
+                        cells_bis.value
+                        and cells_bis.line == cells_valid[0].line
+                        and cells_bis.get_bloc_col() != cells_valid[0].get_bloc_col()
                     ):
-                        block_values.append([i_line, i_cell])
+                        self.available[number].update_cell(cells_bis.drop_value())
 
-                if len(block_values) > 1:
-                    if len(set([value[0] for value in block_values])) == 1:
-                        for i_line, i_cell, _, _ in self.get_cells(
-                            self.available[number]
-                        ):
-                            if i_line == block_values[0][0]:
-                                if (
-                                    self.available[number][i_line][i_cell] is not None
-                                    and i_cell // 3 != column_bloc
-                                ):
-                                    self.available[number][i_line][i_cell] = None
+                        return True
 
-                                    return True
+            # S'il y a plusieurs fois la valeur observée dans le bloc et qu'elles sont sur une seule colonne,
+            # alors on désactive cette valeur dans le reste du bloc :
+            if len(set([cell.column for cell in cells])) == 1:
+                for cells_bis in self.available[number].iter_cells():
+                    if (
+                        cells_bis.value
+                        and cells_bis.column == cells_valid[0].column
+                        and cells_bis.get_bloc_line() != cells_valid[0].get_bloc_line()
+                    ):
+                        self.available[number].update_cell(cells_bis.drop_value())
 
-                    if len(set([value[1] for value in block_values])) == 1:
-                        for i_line, i_cell, _, _ in self.get_cells(
-                            self.available[number]
-                        ):
-                            if i_cell == block_values[0][1]:
-                                if (
-                                    self.available[number][i_line][i_cell] is not None
-                                    and i_line // 3 != line_bloc
-                                ):
-                                    self.available[number][i_line][i_cell] = None
-
-                                    return True
-
-                if len(block_values) == 1:
-                    self.sudoku.update_cell(
-                        GridCell(block_values[0][0], block_values[0][1], number + 1)
-                    )
-
-                    return True
+                        return True
 
     def check_unique_possibility(self):
+        def get_cells(element):
+            for i_line, line in enumerate(element):
+                for i_cell, cell in enumerate(line):
+                    yield i_line, i_cell, line, cell
+
         possibility = [[[] for _ in range(9)] for _ in range(9)]
 
         for number in range(9):
-            for i_line, i_cell, _, cell in self.get_cells(self.available[number]):
-                if cell is None:
+            for cell in self.available[number].iter_cells():
+                if not cell.value:
                     continue
 
-                possibility[i_line][i_cell].append(cell)
+                possibility[cell.line][cell.column].append(cell.value)
 
-        for i_line, i_cell, _, cell in self.get_cells(possibility):
+        for i_line, i_cell, _, cell in get_cells(possibility):
             if len(set(cell)) == 1:
                 if not self.sudoku.get_cell(GridCell(i_line, i_cell)):
                     self.sudoku.update_cell(i_line, i_cell, cell[0])
