@@ -1,9 +1,12 @@
+from grid import Grid
+
+
 class Game:
     STOP_PROCESS = False
     STOP_ITERATION = False
 
     def __init__(self, sudoku):
-        self.sudoku = sudoku
+        self.sudoku = Grid(sudoku)
         self.available = [
             [[number + 1 for _ in range(9)] for _ in range(9)] for number in range(9)
         ]
@@ -13,22 +16,8 @@ class Game:
             for i_cell, cell in enumerate(line):
                 yield i_line, i_cell, line, cell
 
-    def print_grid(self, element):
-        for index, line in enumerate(element):
-            separator = ["-"] * len(line)
-            to_print = [cell or " " for cell in line]
-
-            for position in (6, 3):
-                separator.insert(position, "|")
-                to_print.insert(position, "|")
-
-            if index in (3, 6):
-                print(*separator)
-
-            print(*to_print)
-
     def process(self):
-        self.count_initial_values()
+        print(f"\nNombre de valeurs initiales : {self.sudoku.count_values()}\n")
 
         while not self.STOP_PROCESS:
             self.STOP_PROCESS = True
@@ -56,19 +45,15 @@ class Game:
 
         self.assert_finish()
 
-    def count_initial_values(self):
-        count = len([cell for _, _, _, cell in self.get_cells(self.sudoku) if cell])
-        print(f"\nNombre de valeurs initiales : {count}\n")
-
     def disable_values(self, number):
-        for _i_line, _i_cell, _, cell in self.get_cells(self.sudoku):
+        for _i_line, _i_cell, _, cell in self.sudoku.iter_cells():
             if cell:
                 self.available[number][_i_line][_i_cell] = None
 
             if cell != number + 1:
                 continue
 
-            for i_line, i_cell, _, _ in self.get_cells(self.sudoku):
+            for i_line, i_cell, _, _ in self.sudoku.iter_cells():
                 same_line = i_line == _i_line
                 same_col = i_cell == _i_cell
                 same_block = i_line // 3 == _i_line // 3 and i_cell // 3 == _i_cell // 3
@@ -85,7 +70,9 @@ class Game:
             ]
 
             if len(line_values) == 1:
-                self.sudoku[line_values[0][0]][line_values[0][1]] = number + 1
+                self.sudoku.update_cell(
+                    line_values[0][0], line_values[0][1], number + 1
+                )
 
                 return True
 
@@ -98,7 +85,9 @@ class Game:
             ]
 
             if len(column_values) == 1:
-                self.sudoku[column_values[0][0]][column_values[0][1]] = number + 1
+                self.sudoku.update_cell(
+                    column_values[0][0], column_values[0][1], number + 1
+                )
 
                 return True
 
@@ -143,7 +132,9 @@ class Game:
                                     return True
 
                 if len(block_values) == 1:
-                    self.sudoku[block_values[0][0]][block_values[0][1]] = number + 1
+                    self.sudoku.update_cell(
+                        block_values[0][0], block_values[0][1], number + 1
+                    )
 
                     return True
 
@@ -159,21 +150,15 @@ class Game:
 
         for i_line, i_cell, _, cell in self.get_cells(possibility):
             if len(set(cell)) == 1:
-                if self.sudoku[i_line][i_cell] is None:
-                    self.sudoku[i_line][i_cell] = cell[0]
+                if not self.sudoku.get_cell(i_line, i_cell):
+                    self.sudoku.update_cell(i_line, i_cell, cell[0])
                     return True
 
     def assert_finish(self):
-        has_wrong_line = any([len(set(line)) != 9 for line in self.sudoku])
-
-        has_wrong_column = any(
-            [
-                len(set([line[column] for line in self.sudoku])) != 9
-                for column in range(9)
-            ]
-        )
-
-        if has_wrong_line or has_wrong_column:
+        if not (
+            self.sudoku.check_columns_completed()
+            and self.sudoku.check_columns_completed()
+        ):
             print("Sodoku resolution failed !")
 
-        self.print_grid(self.sudoku)
+        self.sudoku.print()
