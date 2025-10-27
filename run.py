@@ -4,17 +4,6 @@ from grid_processor import GridProcessor
 
 sudokus = [
     [
-        [None, 2, None, None, 4, None, 8, 1, None],
-        [None, None, None, 6, 2, None, 3, None, 4],
-        [None, None, None, 1, 9, 8, None, None, 5],
-        [None, None, None, None, None, 4, 1, 2, None],
-        [7, None, None, 2, None, None, 5, None, 9],
-        [None, None, 9, None, None, 5, None, None, None],
-        [None, 6, 8, None, None, None, None, 7, None],
-        [3, 4, 2, None, 8, None, None, None, None],
-        [None, None, None, None, 5, None, None, None, 8],
-    ],
-    [
         [7, 4, 5, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, 9, None],
         [None, 9, 6, None, 8, 4, 7, None, None],
@@ -70,6 +59,17 @@ sudokus = [
         [None, 2, None, None, None, None, 1, None, None],
     ],
     [
+        [None, None, 5, None, None, None, None, 6, 2],
+        [None, 6, 3, None, None, 9, None, None, None],
+        [None, None, None, None, None, None, None, None, 4],
+        [None, None, None, None, None, 6, 7, None, 3],
+        [None, None, 6, 7, None, 5, None, None, None],
+        [1, None, None, 8, None, None, None, None, None],
+        [8, None, 1, 2, None, None, 6, None, None],
+        [None, None, None, None, None, None, 5, 3, None],
+        [None, 4, None, None, None, None, 8, None, None],
+    ],
+    [
         [None, None, 5, 6, None, 2, None, None, None],
         [7, None, None, 8, 1, None, 4, None, None],
         [None, None, None, None, None, None, 5, 6, None],
@@ -102,6 +102,17 @@ sudokus = [
         [None, None, 3, 7, None, None, None, None, None],
         [7, None, None, None, None, None, 4, None, None],
     ],
+    [
+        [None, None, None, 2, 4, 8, None, None, None],
+        [None, None, None, 9, None, None, None, 6, None],
+        [None, None, None, 5, None, None, 1, 9, None],
+        [None, None, None, None, None, None, 4, None, None],
+        [None, 8, None, None, None, 5, 2, None, None],
+        [None, 2, 4, None, None, None, None, None, 9],
+        [5, None, None, None, 8, None, None, None, None],
+        [None, None, 9, None, None, 7, None, None, None],
+        [1, None, None, None, None, None, None, 3, 7],
+    ],
 ]
 
 time_start = time()
@@ -119,4 +130,4 @@ for sudoku in sudokus:
 
 time_end = time()
 
-print(time_end - time_start)
+print(f"{len(sudokus)} résolus en {round(time_end - time_start, 2)} secondes")
