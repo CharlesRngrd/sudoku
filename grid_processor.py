@@ -41,6 +41,11 @@ class GridProcessor:
         while cell_queue := GridProcessor.remove_solved_cell():
             cls.strategy_post_solved(grid, cell_queue)
 
+            # Les stratégies suivantes sont très lentes,
+            # donc elles sont jouées le plus tard possible.
+            if len(cls.QUEUE):
+                continue
+
             for position in range(9):
                 for number in range(9):
                     for iterable in GridIterable:

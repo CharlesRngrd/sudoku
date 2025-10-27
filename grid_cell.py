@@ -10,18 +10,11 @@ class GridCell:
         self.line = line
         self.column = column
 
+        self.bloc = (self.line // 3) * 3 + self.column // 3
+
         self.__possibilities: Set[int] = set()
 
         self.__initialize(value)
-
-    @property
-    def bloc(self) -> int:
-        """Retourne le bloc 3x3 dans lequel se situe une cellule du Sudoku"""
-
-        line_bloc = self.line // 3
-        column_bloc = self.column // 3
-
-        return line_bloc * 3 + column_bloc
 
     @property
     def solved_value(self) -> int:
