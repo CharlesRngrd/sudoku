@@ -1,4 +1,4 @@
-from typing import List
+from typing import Set
 from grid_iterable import GridIterable
 from grid_processor import GridProcessor
 
@@ -10,7 +10,7 @@ class GridCell:
         self.line = line
         self.column = column
 
-        self.__possibilities: List[int] = []
+        self.__possibilities: Set[int] = set()
 
         self.__initialize(value)
 
@@ -28,7 +28,7 @@ class GridCell:
         """Retourne la valeur d'une cellule du Sudoku si elle a été trouvée"""
 
         if len(self.__possibilities) == 1:
-            return self.__possibilities[0]
+            return next(iter(self.__possibilities))
 
     def __repr__(self):
         return f"Cellule({self.line}, {self.column}, {self.__possibilities})"
@@ -44,7 +44,7 @@ class GridCell:
             self.solve_possibility(value)
 
         else:
-            self.__possibilities = [number + 1 for number in range(9)]
+            self.__possibilities = {number + 1 for number in range(9)}
 
     def get_attribute(self, iterable: GridIterable) -> int:
         """Retourne de façon dynamique un attribut d'une cellule du Sudoku"""
@@ -57,7 +57,7 @@ class GridCell:
             case GridIterable.BLOC:
                 return self.bloc
 
-    def get_possibilities(self) -> List[int]:
+    def get_possibilities(self) -> Set[int]:
         """Retourne les possibilités d'une cellule du Sudoku"""
 
         return self.__possibilities
@@ -65,7 +65,7 @@ class GridCell:
     def solve_possibility(self, value: int) -> None:
         """Assigne la valeur à la cellule et notifie le gestionnaire d'évènements"""
 
-        self.__possibilities = [value]
+        self.__possibilities = {value}
         GridProcessor.add_solved_cell(self)
 
     def drop_possibility(self, value: int) -> None:

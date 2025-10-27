@@ -1,4 +1,4 @@
-from typing import Generator, List
+from typing import Generator, List, Set
 from grid_cell import GridCell
 from grid_iterable import GridIterable
 
@@ -32,22 +32,22 @@ class Grid:
 
         return "\n".join(repr)
 
-    def __initialize(self, sudoku: List[List[int]]) -> List[GridCell]:
+    def __initialize(self, sudoku: List[List[int]]) -> Set[GridCell]:
         """
         Initialise une instance de GridCell pour chaque cellule du Sudoku.
         La grille passe d'une matérialisation en liste de listes à une matérialisation en liste.
         """
 
-        return [
+        return {
             GridCell(line, column, value)
             for line, line_items in enumerate(sudoku)
             for column, value in enumerate(line_items)
-        ]
+        }
 
     def count_values(self) -> int:
         """Retourne le nombre de valeurs remplies dans la grille du Sudoku"""
 
-        return len([cell for cell in self.iter_grid() if cell.solved_value])
+        return len({cell for cell in self.iter_grid() if cell.solved_value})
 
     def iter_grid(self) -> Generator[GridCell, None, None]:
         """Retourne la liste des cellules de la grille du Sudoku"""
@@ -60,8 +60,13 @@ class Grid:
     ) -> Generator[GridCell, None, None]:
         """Retourne la liste des cellules d'une ligne, d'une colonne ou d'un bloc de la grille du Sudoku"""
 
+        count = 0
         for cell in self.__grid_cells:
+            if count == 9:
+                return
+
             if cell.get_attribute(iterable) == position:
+                count += 1
                 yield cell
 
     def check_solved(self) -> None:
@@ -70,7 +75,13 @@ class Grid:
         error = False
 
         for number in range(9):
+            if error:
+                break
+
             for iterable in GridIterable:
+                if error:
+                    break
+
                 unique_values = {
                     frozenset(cell.get_possibilities())
                     for cell in self.iter_element(iterable, number)
@@ -78,7 +89,6 @@ class Grid:
 
                 if len(unique_values) != 9:
                     error = True
-                    break
 
         if error:
             print("Sudoku non résolu ❌")

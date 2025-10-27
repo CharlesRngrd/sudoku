@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TYPE_CHECKING
+from typing import List, Set, TYPE_CHECKING
 from grid_iterable import GridIterable
 
 if TYPE_CHECKING:
@@ -10,13 +10,13 @@ if TYPE_CHECKING:
 class GridProcessor:
     """Responsable de la résolution du Sudoku"""
 
-    QUEUE: List[GridCell] = []
+    QUEUE: Set[GridCell] = set()
 
     @classmethod
     def add_solved_cell(cls, grid_cell: GridCell) -> None:
         """Ajoute une cellule résolue"""
 
-        cls.QUEUE.append(grid_cell)
+        cls.QUEUE.add(grid_cell)
 
     @classmethod
     def remove_solved_cell(cls) -> GridCell:
@@ -44,13 +44,13 @@ class GridProcessor:
             for position in range(9):
                 for number in range(9):
                     for iterable in GridIterable:
-                        cells = [
+                        cells = {
                             cell
                             for cell in grid.iter_element(iterable, position)
                             if (number + 1) in cell.get_possibilities()
-                        ]
+                        }
 
-                        if any([cell for cell in cells if cell.solved_value]):
+                        if any({cell for cell in cells if cell.solved_value}):
                             continue
 
                         cls.strategy_single_possibility(cells, number)
@@ -71,11 +71,11 @@ class GridProcessor:
         """
 
         for grid_cell in grid.iter_grid():
-            drop_conditions = [
+            drop_conditions = {
                 cell_queue.line == grid_cell.line,
                 cell_queue.column == grid_cell.column,
                 cell_queue.bloc == grid_cell.bloc,
-            ]
+            }
 
             if any(drop_conditions):
                 grid_cell.drop_possibility(cell_queue.solved_value)
@@ -91,7 +91,7 @@ class GridProcessor:
         """
 
         if len(cells) == 1:
-            cells[0].solve_possibility(number + 1)
+            next(iter(cells)).solve_possibility(number + 1)
 
     @staticmethod
     def strategy_aligned_possibility(
@@ -109,15 +109,16 @@ class GridProcessor:
             if iterable not in (GridIterable.LINE, GridIterable.COLUMN):
                 return
 
-            if len(set(cell.bloc for cell in cells)) != 1:
+            if len({cell.bloc for cell in cells}) != 1:
                 return
 
-            cleanable_cells = [
+            cleanable_cells = {
                 cell
-                for cell in grid.iter_element(GridIterable.BLOC, cells[0].bloc)
+                for cell in grid.iter_element(GridIterable.BLOC, next(iter(cells)).bloc)
                 if (number + 1) in cell.get_possibilities()
-                and cell.get_attribute(iterable) != cells[0].get_attribute(iterable)
-            ]
+                and cell.get_attribute(iterable)
+                != next(iter(cells)).get_attribute(iterable)
+            }
 
             for cell in cleanable_cells:
                 cell.drop_possibility(number + 1)
