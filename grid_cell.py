@@ -1,4 +1,5 @@
 from typing import List
+from grid_iterable import GridIterable
 from grid_processor import GridProcessor
 
 
@@ -43,6 +44,17 @@ class GridCell:
 
         else:
             self.__possibilities = [number + 1 for number in range(9)]
+
+    def get_attribute(self, iterable: GridIterable) -> int:
+        """Retourne de façon dynamique un attribut d'une cellule du Sudoku"""
+
+        match iterable:
+            case GridIterable.LINE:
+                return self.line
+            case GridIterable.COLUMN:
+                return self.column
+            case GridIterable.BLOC:
+                return self.bloc
 
     def get_possibilities(self) -> List[int]:
         """Retourne les possibilités d'une cellule du Sudoku"""

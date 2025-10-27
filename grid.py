@@ -61,7 +61,7 @@ class Grid:
         """Retourne la liste des cellules d'une ligne, d'une colonne ou d'un bloc de la grille du Sudoku"""
 
         for cell in self.__grid_cells:
-            if cell.__getattribute__(iterable.value) == position:
+            if cell.get_attribute(iterable) == position:
                 yield cell
 
     def check_solved(self) -> None:
