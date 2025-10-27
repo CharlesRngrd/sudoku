@@ -24,10 +24,11 @@ class GridCell:
         return line_bloc * 3 + column_bloc
 
     @property
-    def is_solved(self) -> bool:
-        """Vérifie si la valeur d'une cellule du Sudoku a été trouvée"""
+    def solved_value(self) -> int:
+        """Retourne la valeur d'une cellule du Sudoku si elle a été trouvée"""
 
-        return len(self.__possibilities) == 1
+        if len(self.__possibilities) == 1:
+            return self.__possibilities[0]
 
     def __repr__(self):
         return f"Cellule({self.line}, {self.column}, {self.__possibilities})"
@@ -73,8 +74,8 @@ class GridCell:
         S'il ne reste qu'une possibilité, le gestionnaire d'évènements est notifié.
         """
 
-        if not self.is_solved and value in self.__possibilities:
+        if not self.solved_value and value in self.__possibilities:
             self.__possibilities.remove(value)
 
-            if self.is_solved:
+            if self.solved_value:
                 GridProcessor.add_solved_cell(self)

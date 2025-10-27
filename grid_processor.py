@@ -28,7 +28,8 @@ class GridProcessor:
     @classmethod
     def execute(cls, grid: Grid) -> None:
         """
-        Execute les stratégies associées aux cellules résolues.
+        Execute pour chaque ligne, chaque colonne et chaque bloc les stratégies.
+        Ces stratégies sont jouées pour chaque nombre.
 
         En appliquant une stratégie sur une cellule résolue,
         les possibilités vont se réduire sur d'autres cellules.
@@ -49,7 +50,7 @@ class GridProcessor:
                             if (number + 1) in cell.get_possibilities()
                         ]
 
-                        if any([cell for cell in cells if cell.is_solved]):
+                        if any([cell for cell in cells if cell.solved_value]):
                             continue
 
                         cls.strategy_single_possibility(cells, number)
@@ -77,7 +78,7 @@ class GridProcessor:
             ]
 
             if any(drop_conditions):
-                grid_cell.drop_possibility(cell_queue.get_possibilities()[0])
+                grid_cell.drop_possibility(cell_queue.solved_value)
 
     @staticmethod
     def strategy_single_possibility(cells: List[GridCell], number: int) -> None:
@@ -105,16 +106,18 @@ class GridProcessor:
         """
 
         if len(cells) > 1:
-            if (
-                iterable in (GridIterable.LINE, GridIterable.COLUMN)
-                and len(set(cell.bloc for cell in cells)) == 1
-            ):
-                cleanable_cells = [
-                    cell
-                    for cell in grid.iter_element(GridIterable.BLOC, cells[0].bloc)
-                    if (number + 1) in cell.get_possibilities()
-                    and cell.get_attribute(iterable) != cells[0].get_attribute(iterable)
-                ]
+            if iterable not in (GridIterable.LINE, GridIterable.COLUMN):
+                return
 
-                for cell in cleanable_cells:
-                    cell.drop_possibility(number + 1)
+            if len(set(cell.bloc for cell in cells)) != 1:
+                return
+
+            cleanable_cells = [
+                cell
+                for cell in grid.iter_element(GridIterable.BLOC, cells[0].bloc)
+                if (number + 1) in cell.get_possibilities()
+                and cell.get_attribute(iterable) != cells[0].get_attribute(iterable)
+            ]
+
+            for cell in cleanable_cells:
+                cell.drop_possibility(number + 1)

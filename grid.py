@@ -17,7 +17,7 @@ class Grid:
         for position in range(9):
             separator = ["-"] * 9
             string = [
-                cell.get_possibilities()[0] if cell.is_solved else " "
+                cell.solved_value if cell.solved_value else " "
                 for cell in self.iter_element(GridIterable.LINE, position)
             ]
 
@@ -47,7 +47,7 @@ class Grid:
     def count_values(self) -> int:
         """Retourne le nombre de valeurs remplies dans la grille du Sudoku"""
 
-        return len([cell for cell in self.iter_grid() if cell.is_solved])
+        return len([cell for cell in self.iter_grid() if cell.solved_value])
 
     def iter_grid(self) -> Generator[GridCell, None, None]:
         """Retourne la liste des cellules de la grille du Sudoku"""
