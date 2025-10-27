@@ -1,3 +1,4 @@
+from time import time
 from grid import Grid
 from grid_processor import GridProcessor
 
@@ -70,6 +71,12 @@ sudokus = [
     ],
 ]
 
+time_start = time()
+
 for sudoku in sudokus:
     grid_cells = Grid(sudoku)
     GridProcessor.execute(grid_cells)
+
+time_end = time()
+
+print(time_end - time_start)

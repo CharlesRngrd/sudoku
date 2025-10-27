@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING
-from grid_element import GridElement
+from grid_iterable import GridIterable
 
 if TYPE_CHECKING:
     from grid import Grid
@@ -37,7 +37,13 @@ class GridProcessor:
 
         while cell_queue := GridProcessor.remove_solved_cell():
             cls.strategy_post_solved(grid, cell_queue)
-            cls.strategy_single_possibility(grid)
+
+            for position in range(9):
+                for number in range(9):
+                    for iterable in GridIterable:
+                        cls.strategy_single_possibility(
+                            grid, position, number, iterable
+                        )
 
         print(f"Nombre de valeurs finales : {grid.count_values()}")
         print(grid)
@@ -62,24 +68,23 @@ class GridProcessor:
                 grid_cell.drop_possibility(cell_queue.get_possibilities()[0])
 
     @staticmethod
-    def strategy_single_possibility(grid: Grid) -> None:
+    def strategy_single_possibility(
+        grid: Grid, position: int, number: int, iterable: GridIterable
+    ) -> None:
         """
         Stratégie qui consiste à :
         Vérifier dans chaque ligne, colonne et bloc si une possibilité est présente une seule fois.
         Dans ce cas, la cellule est résolue.
         """
 
-        for position in range(9):
-            for number in range(9):
-                for element in GridElement:
-                    cells = [
-                        cell
-                        for cell in grid.iter_element(element, position)
-                        if (number + 1) in cell.get_possibilities()
-                    ]
+        cells = [
+            cell
+            for cell in grid.iter_element(iterable, position)
+            if (number + 1) in cell.get_possibilities()
+        ]
 
-                    if any([cell for cell in cells if cell.is_solved]):
-                        continue
+        if any([cell for cell in cells if cell.is_solved]):
+            return
 
-                    if len(cells) == 1:
-                        cells[0].solve_possibility(number + 1)
+        if len(cells) == 1:
+            cells[0].solve_possibility(number + 1)
