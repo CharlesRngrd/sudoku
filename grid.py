@@ -1,4 +1,4 @@
-from typing import Generator, List, Set, Tuple
+from typing import Generator, List, Tuple
 from grid_cell import GridCell
 from grid_iterable import GridIterable
 
@@ -32,17 +32,17 @@ class Grid:
 
         return "\n".join(repr)
 
-    def __initialize(self, sudoku: List[List[int]]) -> Set[GridCell]:
+    def __initialize(self, sudoku: List[List[int]]) -> List[GridCell]:
         """
         Initialise une instance de GridCell pour chaque cellule du Sudoku.
         La grille passe d'une matérialisation en liste de listes à une matérialisation en liste.
         """
 
-        return {
+        return [
             GridCell(line, column, value)
             for line, line_items in enumerate(sudoku)
             for column, value in enumerate(line_items)
-        }
+        ]
 
     def count_values(self) -> int:
         """Retourne le nombre de valeurs remplies dans la grille du Sudoku"""
@@ -99,7 +99,7 @@ class Grid:
                     break
 
                 unique_values = {
-                    frozenset(cell.get_possibilities())
+                    next(iter(cell.get_possibilities()))
                     for cell in self.iter_element(iterable, number)
                 }
 
