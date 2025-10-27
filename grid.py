@@ -1,4 +1,4 @@
-from typing import Generator, List, Set
+from typing import Generator, List, Set, Tuple
 from grid_cell import GridCell
 from grid_iterable import GridIterable
 
@@ -69,6 +69,22 @@ class Grid:
                 count += 1
                 yield cell
 
+    def iter_element_all(
+        self,
+    ) -> Generator[Tuple[int, int, GridIterable, List[GridCell]], None, None]:
+        """Retourne le liste des cellules de chaque ligne, de chaque colonne, de chaque bloc pour chaque chiffre"""
+
+        for position in range(9):
+            for number in range(9):
+                for iterable in GridIterable:
+                    cells = {
+                        cell
+                        for cell in self.iter_element(iterable, position)
+                        if (number + 1) in cell.get_possibilities()
+                    }
+
+                    yield position, number, iterable, cells
+
     def check_solved(self) -> None:
         """Vérifie que chaque ligne, colonne et bloc contient 9 chiffres distincts"""
 
@@ -91,6 +107,6 @@ class Grid:
                     error = True
 
         if error:
-            print("Sudoku non résolu ❌")
+            return "Sudoku non résolu ❌\n"
         else:
-            print("Sudoku résolu ✅")
+            return "Sudoku résolu ✅\n"

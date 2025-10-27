@@ -74,8 +74,15 @@ sudokus = [
 time_start = time()
 
 for sudoku in sudokus:
-    grid_cells = Grid(sudoku)
-    GridProcessor.execute(grid_cells)
+    grid = Grid(sudoku)
+
+    print(f"Nombre de valeurs initiales : {grid.count_values()}")
+
+    GridProcessor.execute(grid)
+
+    print(f"Nombre de valeurs finales : {grid.count_values()}")
+    print(grid)
+    print(grid.check_solved())
 
 time_end = time()
 

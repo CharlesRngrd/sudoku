@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Set, TYPE_CHECKING
+from typing import Dict, List, Set, TYPE_CHECKING
 from grid_iterable import GridIterable
 
 if TYPE_CHECKING:
@@ -36,8 +36,6 @@ class GridProcessor:
         Cela peut déclancher d'autres résolutions en chaine.
         """
 
-        print(f"Nombre de valeurs initiales : {grid.count_values()}")
-
         while cell_queue := GridProcessor.remove_solved_cell():
             cls.strategy_post_solved(grid, cell_queue)
 
@@ -46,24 +44,13 @@ class GridProcessor:
             if len(cls.QUEUE):
                 continue
 
-            for position in range(9):
-                for number in range(9):
-                    for iterable in GridIterable:
-                        cells = {
-                            cell
-                            for cell in grid.iter_element(iterable, position)
-                            if (number + 1) in cell.get_possibilities()
-                        }
+            for _, number, iterable, cells in grid.iter_element_all():
+                if any({cell for cell in cells if cell.solved_value}):
+                    continue
 
-                        if any({cell for cell in cells if cell.solved_value}):
-                            continue
-
-                        cls.strategy_single_possibility(cells, number)
-                        cls.strategy_aligned_possibility(grid, iterable, cells, number)
-
-        print(f"Nombre de valeurs finales : {grid.count_values()}")
-        print(grid)
-        print(grid.check_solved())
+                cls.strategy_duplicate_pairs(cells)
+                cls.strategy_single_possibility(cells, number)
+                cls.strategy_aligned_possibility(grid, iterable, cells, number)
 
     @staticmethod
     def strategy_post_solved(grid: Grid, cell_queue: GridCell) -> None:
@@ -127,3 +114,37 @@ class GridProcessor:
 
             for cell in cleanable_cells:
                 cell.drop_possibility(number + 1)
+
+    @staticmethod
+    def strategy_duplicate_pairs(cells: List[GridCell]) -> None:
+        """
+        Stratégie qui consiste à :
+
+        Identifier 2 cellules dans une ligne, dans une colonne ou dans un bloc
+        qui ont uniqument 2 valeurs possibles.
+        Dans ce cas, ces valeurs peuvent être supprimée des autres cellules cet élément.
+        """
+
+        possibility_map: Dict[str, List[GridCell]] = {}
+
+        for cell in cells:
+            key = str(cell.get_possibilities())
+
+            possibility_map.setdefault(key, [])
+            possibility_map[key].append(cell)
+
+        duplicates = [
+            duplicate_cells
+            for _, duplicate_cells in possibility_map.items()
+            if len(duplicate_cells) == 2
+            and len(duplicate_cells[0].get_possibilities()) == 2
+        ]
+
+        if not duplicates:
+            return
+
+        for duplicate_cells in duplicates:
+            for cell in cells:
+                if cell not in duplicate_cells:
+                    for possibility in duplicate_cells[0].get_possibilities():
+                        cell.drop_possibility(possibility)
