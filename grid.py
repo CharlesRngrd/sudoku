@@ -1,5 +1,6 @@
 from typing import Generator, List
 from grid_cell import GridCell
+from grid_element import GridElement
 
 
 class Grid:
@@ -17,7 +18,7 @@ class Grid:
             separator = ["-"] * 9
             string = [
                 cell.get_possibilities()[0] if cell.is_solved else " "
-                for cell in self.iter_line(position)
+                for cell in self.iter_element(GridElement.LINE, position)
             ]
 
             for bloc_end_separator in (6, 3):
@@ -54,58 +55,32 @@ class Grid:
         for cell in self.__grid_cells:
             yield cell
 
-    def iter_line(self, position: int) -> Generator[GridCell, None, None]:
-        """Retourne la liste des cellules d'une ligne de la grille du Sudoku"""
+    def iter_element(
+        self, element: GridElement, position: int
+    ) -> Generator[GridCell, None, None]:
+        """Retourne la liste des cellules d'une ligne, d'une colonne ou d'un bloc de la grille du Sudoku"""
 
         for cell in self.__grid_cells:
-            if cell.line == position:
-                yield cell
-
-    def iter_column(self, position: int) -> Generator[GridCell, None, None]:
-        """Retourne la liste des cellules d'une colonne de la grille du Sudoku"""
-
-        for cell in self.__grid_cells:
-            if cell.column == position:
-                yield cell
-
-    def iter_bloc(self, position: int) -> Generator[GridCell, None, None]:
-        """Retourne la liste des cellules d'un bloc de la grille du Sudoku"""
-
-        for cell in self.__grid_cells:
-            if cell.bloc == position:
+            if cell.__getattribute__(element.value) == position:
                 yield cell
 
     def check_solved(self) -> None:
         """Vérifie que chaque ligne, colonne et bloc contient 9 chiffres distincts"""
 
-        for number in range(9):
-            if any(
-                [
-                    len(
-                        {
-                            frozenset(cell.get_possibilities())
-                            for cell in self.iter_line(number)
-                        }
-                    )
-                    != 9,
-                    len(
-                        {
-                            frozenset(cell.get_possibilities())
-                            for cell in self.iter_column(number)
-                        }
-                    )
-                    != 9,
-                    len(
-                        {
-                            frozenset(cell.get_possibilities())
-                            for cell in self.iter_bloc(number)
-                        }
-                    )
-                    != 9,
-                ]
-            ):
-                print("Sudoku non résolu ❌")
-                break
+        error = False
 
+        for number in range(9):
+            for element in GridElement:
+                unique_values = {
+                    frozenset(cell.get_possibilities())
+                    for cell in self.iter_element(element, number)
+                }
+
+                if len(unique_values) != 9:
+                    error = True
+                    break
+
+        if error:
+            print("Sudoku non résolu ❌")
         else:
             print("Sudoku résolu ✅")

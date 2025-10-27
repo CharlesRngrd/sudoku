@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING
+from grid_element import GridElement
 
 if TYPE_CHECKING:
     from grid import Grid
@@ -7,6 +8,8 @@ if TYPE_CHECKING:
 
 
 class GridProcessor:
+    """Responsable de la résolution du Sudoku"""
+
     QUEUE: List[GridCell] = []
 
     @classmethod
@@ -68,14 +71,15 @@ class GridProcessor:
 
         for position in range(9):
             for number in range(9):
-                cells = [
-                    cell
-                    for cell in grid.iter_bloc(position)
-                    if (number + 1) in cell.get_possibilities()
-                ]
+                for element in GridElement:
+                    cells = [
+                        cell
+                        for cell in grid.iter_element(element, position)
+                        if (number + 1) in cell.get_possibilities()
+                    ]
 
-                if any([cell for cell in cells if cell.is_solved]):
-                    continue
+                    if any([cell for cell in cells if cell.is_solved]):
+                        continue
 
-                if len(cells) == 1:
-                    cells[0].solve_possibility(number + 1)
+                    if len(cells) == 1:
+                        cells[0].solve_possibility(number + 1)
