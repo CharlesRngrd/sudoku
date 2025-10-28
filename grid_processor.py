@@ -37,6 +37,8 @@ class GridProcessor:
         """
 
         while cell_queue := GridProcessor.remove_solved_cell():
+            grid.move_solved_cell(cell_queue)
+
             cls.strategy_post_solved(grid, cell_queue)
 
             # Les stratégies suivantes sont très lentes,
@@ -44,10 +46,7 @@ class GridProcessor:
             if len(cls.QUEUE):
                 continue
 
-            for _, number, iterable, cells in grid.iter_element_all():
-                if any({cell for cell in cells if cell.solved_value}):
-                    continue
-
+            for _, number, iterable, cells in grid.iter_possibilities_wrapper():
                 cls.strategy_duplicate_pairs(cells)
                 cls.strategy_single_possibility(cells, number)
                 cls.strategy_aligned_possibility(grid, iterable, cells, number)
@@ -62,14 +61,10 @@ class GridProcessor:
         Cette possibilité à supprimer correspond à la valeur de la cellule résolue.
         """
 
-        for grid_cell in grid.iter_grid():
-            drop_conditions = {
-                cell_queue.line == grid_cell.line,
-                cell_queue.column == grid_cell.column,
-                cell_queue.bloc == grid_cell.bloc,
-            }
+        for iterable in GridIterable:
+            grid_cells = grid.possibilities[iterable][cell_queue.get_attribute(iterable)]
 
-            if any(drop_conditions):
+            for grid_cell in grid_cells:
                 grid_cell.drop_possibility(cell_queue.solved_value)
 
     @staticmethod
@@ -92,28 +87,29 @@ class GridProcessor:
         """
         Stratégie qui consiste à :
 
-        Vérifier dans chaque ligne et chaque colonne si les possibilités sont alignées
-        et présentes dans un seul bloc.
+        Vérifier dans chaque ligne et chaque colonne si les possibilités sont présentes dans un seul bloc.
         Dans ce cas, aucune autre cellule de ce bloc ne peut contenir cette possibilité.
         """
 
-        if len(cells) > 1:
-            if iterable not in (GridIterable.LINE, GridIterable.COLUMN):
-                return
+        if len(cells) < 2:
+            return
 
-            if len({cell.bloc for cell in cells}) != 1:
-                return
+        if iterable == GridIterable.BLOC:
+            return
 
-            cleanable_cells = {
-                cell
-                for cell in grid.iter_element(GridIterable.BLOC, next(iter(cells)).bloc)
-                if (number + 1) in cell.get_possibilities()
-                and cell.get_attribute(iterable)
-                != next(iter(cells)).get_attribute(iterable)
-            }
+        if len({cell.bloc for cell in cells}) != 1:
+            return
 
-            for cell in cleanable_cells:
-                cell.drop_possibility(number + 1)
+        cleanable_cells = {
+            cell
+            for cell in grid.iter_possibilities(
+                GridIterable.BLOC, next(iter(cells)).bloc, number + 1
+            )
+            if cell not in cells
+        }
+
+        for cell in cleanable_cells:
+            cell.drop_possibility(number + 1)
 
     @staticmethod
     def strategy_duplicate_pairs(cells: List[GridCell]) -> None:
@@ -145,6 +141,8 @@ class GridProcessor:
 
         for duplicate_cells in duplicates:
             for cell in cells:
-                if cell not in duplicate_cells:
-                    for possibility in duplicate_cells[0].get_possibilities():
-                        cell.drop_possibility(possibility)
+                if cell in duplicate_cells:
+                    continue
+
+                for possibility in duplicate_cells[0].get_possibilities():
+                    cell.drop_possibility(possibility)

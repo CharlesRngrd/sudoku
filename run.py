@@ -130,4 +130,4 @@ for sudoku in sudokus:
 
 time_end = time()
 
-print(f"{len(sudokus)} résolus en {round(time_end - time_start, 2)} secondes")
+print(f"{len(sudokus)} résolus en {round(time_end - time_start, 3)} secondes")

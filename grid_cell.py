@@ -10,7 +10,7 @@ class GridCell:
         self.line = line
         self.column = column
 
-        self.bloc = (self.line // 3) * 3 + self.column // 3
+        self.bloc = self.compute_bloc(line, column)
 
         self.__possibilities: Set[int] = set()
 
@@ -38,6 +38,12 @@ class GridCell:
 
         else:
             self.__possibilities = {number + 1 for number in range(9)}
+
+    @staticmethod
+    def compute_bloc(line: int, column: int):
+        """Retourne le bloc 3x3 associé à la ligne et à la colonne"""
+
+        return (line // 3) * 3 + column // 3
 
     def get_attribute(self, iterable: GridIterable) -> int:
         """Retourne de façon dynamique un attribut d'une cellule du Sudoku"""
@@ -67,7 +73,7 @@ class GridCell:
         S'il ne reste qu'une possibilité, le gestionnaire d'évènements est notifié.
         """
 
-        if not self.solved_value and value in self.__possibilities:
+        if value in self.__possibilities:
             self.__possibilities.remove(value)
 
             if self.solved_value:
