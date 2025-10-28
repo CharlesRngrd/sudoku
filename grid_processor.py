@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List, Set, TYPE_CHECKING
+
 from grid_iterable import GridIterable
 
 if TYPE_CHECKING:
@@ -66,7 +67,9 @@ class GridProcessor:
         """
 
         for iterable in GridIterable:
-            grid_cells = grid.possibilities[iterable][cell_queue.get_attribute(iterable)]
+            grid_cells = grid.possibilities[iterable][
+                cell_queue.get_attribute(iterable)
+            ]
 
             for grid_cell in grid_cells:
                 grid_cell.drop_possibility(cell_queue.solved_value)

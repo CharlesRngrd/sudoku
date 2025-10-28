@@ -1,4 +1,5 @@
 from typing import Dict, Generator, List, Tuple
+
 from grid_cell import GridCell
 from grid_iterable import GridIterable
 
@@ -134,5 +135,5 @@ class Grid:
 
         if error:
             return "Sudoku non résolu ❌\n"
-        
+
         return "Sudoku résolu ✅\n"

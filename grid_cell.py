@@ -1,4 +1,5 @@
 from typing import Set
+
 from grid_iterable import GridIterable
 from grid_processor import GridProcessor
 
