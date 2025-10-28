@@ -47,8 +47,12 @@ class GridProcessor:
                 continue
 
             for _, number, iterable, cells in grid.iter_possibilities_wrapper():
-                cls.strategy_duplicate_pairs(cells)
                 cls.strategy_single_possibility(cells, number)
+
+                if len(cells) < 2:
+                    continue
+
+                cls.strategy_duplicate_pairs(cells)
                 cls.strategy_aligned_possibility(grid, iterable, cells, number)
 
     @staticmethod
@@ -91,9 +95,6 @@ class GridProcessor:
         Dans ce cas, aucune autre cellule de ce bloc ne peut contenir cette possibilité.
         """
 
-        if len(cells) < 2:
-            return
-
         if iterable == GridIterable.BLOC:
             return
 
@@ -124,6 +125,9 @@ class GridProcessor:
         possibility_map: Dict[str, List[GridCell]] = {}
 
         for cell in cells:
+            if len(cell.get_possibilities()) != 2:
+                continue
+
             key = str(cell.get_possibilities())
 
             possibility_map.setdefault(key, [])
@@ -133,7 +137,6 @@ class GridProcessor:
             duplicate_cells
             for _, duplicate_cells in possibility_map.items()
             if len(duplicate_cells) == 2
-            and len(duplicate_cells[0].get_possibilities()) == 2
         ]
 
         if not duplicates:
