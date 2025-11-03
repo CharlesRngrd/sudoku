@@ -1,4 +1,5 @@
 from time import time
+
 from grid import Grid
 from grid_processor import GridProcessor
 
@@ -116,6 +117,7 @@ sudokus = [
 ]
 
 time_start = time()
+success_count = 0
 
 for sudoku in sudokus:
     grid = Grid(sudoku)
@@ -126,8 +128,16 @@ for sudoku in sudokus:
 
     print(f"Nombre de valeurs finales : {grid.count_values()}")
     print(grid)
-    print(grid.check_solved())
+
+    if grid.check_solved():
+        success_count += 1
+        print("Sudoku résolu ✅\n")
+
+    else:
+        print("Sudoku non résolu ❌\n")
 
 time_end = time()
 
-print(f"{len(sudokus)} résolus en {round(time_end - time_start, 3)} secondes")
+print(
+    f"{success_count} / {len(sudokus)} résolus en {round(time_end - time_start, 3)} secondes"
+)

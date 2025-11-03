@@ -29,9 +29,9 @@ class GridCell:
 
     def __initialize(self, value: int) -> None:
         """
-        Initialise les possibilités d'une cellule du Sudoko.
-        - Si la valeur de départ est nulle, alors tous les chiffres sont possibles.
-        - Si la valeur de départ est un chiffre, alors cette cellule est résolue.
+        Initialise les possibilités d'une cellule du Sudoko :
+        - Si la valeur de départ est nulle, alors tous les chiffres sont possibles
+        - Si la valeur de départ est un chiffre, alors cette cellule est résolue
         """
 
         if value:

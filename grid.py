@@ -48,7 +48,7 @@ class Grid:
                 self.possibilities[iterable][cell.get_attribute(iterable)].append(cell)
 
     def move_solved_cell(self, cell: GridCell) -> None:
-        """Ajout une valeur à la grille du Sudoku"""
+        """Supprime une cellule des possibilités et ajoute sa valeur à la grille du Sudoku"""
 
         self.grid[cell.line][cell.column] = cell.solved_value
 
@@ -127,13 +127,10 @@ class Grid:
                     break
 
                 unique_values = {
-                    value for _, _, value in self.iter_grid(iterable, number)
+                    value for _, _, value in self.iter_grid(iterable, number) if value
                 }
 
                 if len(unique_values) != 9:
                     error = True
 
-        if error:
-            return "Sudoku non résolu ❌\n"
-
-        return "Sudoku résolu ✅\n"
+        return not error
