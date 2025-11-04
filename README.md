@@ -23,9 +23,10 @@ Responsable de la position et des possibilités d'une cellule du Sudoku.
 Responsable de la grille du Sudoku.
 <br>Cette classe propose des méthodes pour filtrer la grille, par ligne, par colonne, par bloc 3x3 et par valeur.
 <br>`Grid.grid` représente la grille du sudoku.
-<br>`Grid.possibilities` représente le brouillon utilisé pour résoudre la grille. Pour chaque cellule non résolue, `Grid.possibilities` contient une instance de `GridCell` qui sera retirée dès que la valeur de la cellule est trouvée.
+<br>`Grid.possibilities` représente le brouillon utilisé pour résoudre la grille. 
+<br>Pour chaque cellule non résolue, `Grid.possibilities` contient une instance de `GridCell` qui sera retirée dès que la valeur de la cellule est trouvée.
 
 - **GridProcessor**
 
 Responsable de la résolution du Sudoku.
-<br>Cette classe traite les notifications des instances de `GridCell`. Tant qu'une cellule est résolue, l'ensemble des stratégies pour réduire des possibilités sont exécutées. Ces stratégies utilisent un ensemble de filtres mis à disposition pour les méthodes de `Grid`.
+<br>Cette classe traite les notifications envoyées par les instances de `GridCell`. Tant qu'une nouvelle cellule est résolue, l'ensemble des stratégies pour réduire des possibilités sont exécutées. Ces stratégies utilisent un ensemble de filtres mis à disposition par les méthodes de `Grid`.
